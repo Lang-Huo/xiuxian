@@ -1,0 +1,80 @@
+:root {
+  /* 墨色层次 */
+  --ink: #1f1d1a;          /* 浓墨 */
+  --ink-soft: #4a463f;     /* 次墨 */
+  --ink-light: #8a8479;    /* 淡墨 / 飞白 */
+  /* 宣纸 */
+  --paper: #f4f1ea;
+  --paper-2: #ebe7dd;
+  /* 墨线 */
+  --line: #d6d1c4;
+  /* 朱砂印（唯一彩色点缀） */
+  --seal: #9e3b34;
+  --seal-soft: #f3e2dd;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "STKaiti", "KaiTi", "Kaiti SC", "Songti SC", "STSong",
+               "PingFang SC", "Microsoft YaHei", serif;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* 模拟宣纸上的淡墨晕染 */
+  background-image:
+    radial-gradient(ellipse 55% 45% at 12% 8%,  rgba(31,29,26,.05), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 88% 90%, rgba(31,29,26,.06), transparent 55%),
+    radial-gradient(circle at 72% 18%, rgba(158,59,52,.045), transparent 38%),
+    /* 宣纸纤维：极淡的经纬纹理 */
+    repeating-linear-gradient(90deg, rgba(31,29,26,.014) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(0deg,  rgba(31,29,26,.012) 0 1px, transparent 1px 5px);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ============ 水墨动效 ============ */
+
+/* 淡墨晕开：内容入场，如墨滴落在宣纸上缓缓化开 */
+@keyframes inkIn {
+  from { opacity: 0; transform: translateY(8px) scale(.985); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0)  scale(1);     filter: blur(0); }
+}
+
+/* 笔触横扫：标题下方的墨线由左向右扫出 */
+@keyframes brushSweep {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* 朱印盖下：由大缩小并轻微过冲，仿印章落纸 */
+@keyframes sealStamp {
+  0%   { opacity: 0; transform: scale(2.2) rotate(-18deg); }
+  60%  { opacity: 1; transform: scale(.94) rotate(-5deg); }
+  80%  { transform: scale(1.06) rotate(-3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-4deg); }
+}
+
+/* 墨迹呼吸：背景墨晕极缓慢的明暗浮动 */
+@keyframes inkBreathe {
+  0%, 100% { opacity: .85; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

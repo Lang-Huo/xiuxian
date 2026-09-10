@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: xiuxian-backend
+  datasource:
+    # 注意：characterEncoding 必须是 JVM 认识的字符集名（如 UTF-8）。
+    #       写成 utf8mb4 会让 MySQL Connector/J 抛 "Unsupported character encoding 'utf8mb4'"，
+    #       导致连接池初始化失败。UTF-8 会被驱动映射为 MySQL 的 utf8mb4。
+    url: jdbc:mysql://localhost:3306/xiuxian?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${XIUXIAN_DB_USER:root}
+    password: ${XIUXIAN_DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # 启动时自动执行 resources/schema.sql 建表（含 IF NOT EXISTS，可重复执行，安全幂等）
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  profiles:
+    active: dev
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true   # 实体 camelCase <-> 表字段 snake_case
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto                     # 依赖数据库自增主键
+
+
+# 前端地址（用于 CORS，开发期 Vite 默认 5173）
+app:
+  cors:
+    allowed-origins: ${XIUXIAN_CORS_ORIGINS:http://localhost:5173}
+  jwt:
+    secret: ${XIUXIAN_JWT_SECRET:xiuxian-dev-secret-change-me}   # 生产务必通过环境变量注入强随机串
+    expiration-hours: ${XIUXIAN_JWT_EXPIRE:168}                  # 令牌有效期（小时），默认 7 天
+
+# AI 出题配置：默认使用 Mock，配置 api-key 后切换为真实大模型
+xiuxian:
+  ai:
+    enabled: ${XIUXIAN_AI_ENABLED:false}
+    provider: openai
+    base-url: ${XIUXIAN_AI_BASE_URL:https://api.openai.com/v1}
+    api-key: ${XIUXIAN_AI_API_KEY:}
+    model: ${XIUXIAN_AI_MODEL:gpt-4o-mini}
+    timeout-seconds: 60

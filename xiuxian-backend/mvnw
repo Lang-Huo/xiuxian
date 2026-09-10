@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# 自带 Maven 启动器（绕过本机可能损坏的 mvn 脚本）
+# 用法：./mvnw <maven 参数>，如 ./mvnw spring-boot:run
+set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MVN_HOME="$SCRIPT_DIR/../tooling/apache-maven-3.9.6"
+BOOT_JAR="$(ls "$MVN_HOME"/boot/plexus-classworlds-*.jar 2>/dev/null | head -1)"
+if [ -z "$BOOT_JAR" ]; then
+  echo "未找到 tooling/apache-maven-3.9.6，请确认目录结构。" >&2
+  exit 1
+fi
+exec java -classpath "$BOOT_JAR" \
+  -Dmaven.home="$MVN_HOME" \
+  -Dmaven.multiModuleProjectDirectory="$SCRIPT_DIR" \
+  -Dclassworlds.conf="$MVN_HOME/bin/m2.conf" \
+  org.codehaus.plexus.classworlds.launcher.Launcher "$@"

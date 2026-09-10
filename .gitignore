@@ -1,0 +1,18 @@
+# 构建产物 / 依赖
+target/
+node_modules/
+dist/
+*.class
+
+# 本机自带 Maven（仅沙箱环境 workaround，不入库）
+tooling/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 本地配置
+*.log
+
+.workbuddy/

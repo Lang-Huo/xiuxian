@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: xiuxian-backend
+  datasource:
+    # 本地开发用 H2 内存库（MySQL 兼容模式），免装数据库即可启动
+    url: jdbc:h2:mem:xiuxian;DB_CLOSE_DELAY=-1;MODE=MySQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  # 启动时自动执行 resources/schema.sql 建表（含 IF NOT EXISTS，可重复执行，安全幂等）
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true   # 实体 camelCase <-> 表字段 snake_case
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto                     # 依赖数据库自增主键
+
+
+# 前端地址（用于 CORS，开发期 Vite 默认 5173）
+app:
+  cors:
+    allowed-origins: ${XIUXIAN_CORS_ORIGINS:http://localhost:5173}
+  jwt:
+    secret: ${XIUXIAN_JWT_SECRET:xiuxian-dev-secret-change-me}   # 生产务必通过环境变量注入强随机串
+    expiration-hours: ${XIUXIAN_JWT_EXPIRE:168}                  # 令牌有效期（小时），默认 7 天
+
+# AI 出题配置：默认使用 Mock，配置 api-key 后切换为真实大模型
+xiuxian:
+  ai:
+    enabled: ${XIUXIAN_AI_ENABLED:false}
+    provider: openai
+    base-url: ${XIUXIAN_AI_BASE_URL:https://api.openai.com/v1}
+    api-key: ${XIUXIAN_AI_API_KEY:}
+    model: ${XIUXIAN_AI_MODEL:gpt-4o-mini}
+    timeout-seconds: 60
