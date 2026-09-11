@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '../api'
 
+const emit = defineEmits(['test-root'])
+
 const profile = ref(null)
 const avatars = ref([])
 const loading = ref(true)
@@ -27,6 +29,7 @@ onMounted(load)
 
 // 后端保证头像不为 null，这里再兜一层，防止旧版本接口返回空
 const avatar = computed(() => profile.value?.avatar || { code: '', name: '未定', glyph: '仙', fg: '#9e3b34', bg: '#f7ece9' })
+const spiritRoot = computed(() => profile.value?.spiritRoot || null)
 
 async function togglePicker() {
   pickerOpen.value = !pickerOpen.value
@@ -82,6 +85,21 @@ const pct = (v) => (v * 100).toFixed(1) + '%'
         <button class="mini pick" :disabled="saving" @click="togglePicker">
           {{ pickerOpen ? '收起' : '换头像' }}
         </button>
+      </section>
+
+      <!-- 灵根 -->
+      <section v-if="spiritRoot" class="panel root-card">
+        <div class="r-name">{{ spiritRoot.name }}</div>
+        <div class="r-meta">
+          <span class="rarity">{{ spiritRoot.rarity }}</span>
+          <span class="mult">道行 ×{{ spiritRoot.multiplier }}</span>
+        </div>
+        <p class="r-desc">{{ spiritRoot.description }}</p>
+      </section>
+      <section v-else class="panel root-card untested">
+        <div class="r-name muted">灵根未定</div>
+        <p class="r-desc">测灵根后可获得答对题目的道行倍率加成。</p>
+        <button class="btn primary small" @click="$emit('test-root')">立即测灵根</button>
       </section>
 
       <!-- 换头像 -->
@@ -239,6 +257,21 @@ h3 {
 .av.on { border-color: var(--seal); box-shadow: 0 0 0 2px rgba(158,59,52,.14); }
 .av.on .n { color: var(--seal); font-weight: 600; }
 .av:disabled { opacity: .6; cursor: default; }
+
+/* 灵根卡 */
+.root-card { text-align: center; }
+.root-card .r-name {
+  font-size: 28px; font-weight: 700; color: var(--seal);
+  letter-spacing: 8px; padding: 4px 0 8px;
+}
+.root-card.untested .r-name { font-size: 18px; letter-spacing: 4px; }
+.root-card .r-name.muted { color: var(--ink-light); font-weight: 500; }
+.r-meta { display: flex; justify-content: center; gap: 12px; margin-bottom: 12px; }
+.r-meta .rarity { font-size: 12px; color: var(--ink-light); border: 1px solid var(--line); border-radius: 2px; padding: 1px 8px; }
+.r-meta .mult { font-size: 12px; color: var(--seal); border: 1px solid var(--seal); border-radius: 2px; padding: 1px 8px; font-weight: 600; }
+.r-desc { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.8; letter-spacing: 1px; }
+.root-card.untested .r-desc { margin-bottom: 14px; }
+.btn.primary.small { padding: 7px 22px; font-size: 13px; letter-spacing: 3px; }
 
 /* 双栏 */
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

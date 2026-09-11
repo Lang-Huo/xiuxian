@@ -7,6 +7,7 @@ import AuthView from './components/AuthView.vue'
 import InkBackground from './components/InkBackground.vue'
 import ProfileView from './components/ProfileView.vue'
 import BagView from './components/BagView.vue'
+import SpiritRootView from './components/SpiritRootView.vue'
 
 const authed = ref(false)
 const userState = ref(null)
@@ -24,6 +25,9 @@ const error = ref('')
 
 const session = ref({ total: 0, correct: 0, drops: [] })   // drops：本轮拾获的宝物
 
+// 测灵根引导：注册后自动弹出；登录用户在「我的」可手动触发
+const rootTestOpen = ref(false)
+
 // 主导航：修炼 / 背包 / 我的
 const tab = ref('practice')
 const profileKey = ref(0)          // 切到「我的」时自增，强制重新拉取详情
@@ -31,8 +35,11 @@ const bagKey = ref(0)              // 切到「背包」时自增，强制重新
 
 function switchTab(t) {
   tab.value = t
-  if (t === 'profile') profileKey.value++
-  if (t === 'bag') bagKey.value++
+  // 「我的」页含行囊，两个组件一起刷新
+  if (t === 'profile') {
+    profileKey.value++
+    bagKey.value++
+  }
 }
 
 onMounted(async () => {
@@ -55,6 +62,20 @@ async function onAuthSuccess(resp) {
   setToken(resp.token)
   userState.value = resp.user
   authed.value = true
+  // 注册后自动引导测灵根（已测则不弹）
+  if (!resp.user.spiritRoot) {
+    rootTestOpen.value = true
+  }
+}
+
+function startRootTest() {
+  rootTestOpen.value = true
+}
+
+async function onRootDone() {
+  // 测灵根完成 → 关闭弹窗 + 拉取最新状态（userState.spiritRoot 已变化）
+  rootTestOpen.value = false
+  await loadMe()
 }
 
 function logout() {
@@ -67,6 +88,7 @@ function logout() {
   currentIndex.value = 0
   error.value = ''
   tab.value = 'practice'
+  rootTestOpen.value = false
 }
 
 async function startPractice() {
@@ -125,7 +147,7 @@ function restart() {
 <template>
   <InkBackground />
 
-  <div class="app">
+  <div class="app" :class="{ wide: tab === 'profile' }">
     <header>
       <div class="brand">
         <span class="seal">仙</span>
@@ -140,17 +162,17 @@ function restart() {
 
     <!-- 已登录：修炼主界面 -->
     <template v-else>
-      <div v-if="userState" class="status-wrap">
-        <GameStatus :state="userState" />
-      </div>
-
       <nav class="tabs">
         <button class="tab" :class="{ active: tab === 'practice' }" @click="switchTab('practice')">修炼</button>
-        <button class="tab" :class="{ active: tab === 'bag' }" @click="switchTab('bag')">背包</button>
         <button class="tab" :class="{ active: tab === 'profile' }" @click="switchTab('profile')">我的</button>
       </nav>
 
       <template v-if="tab === 'practice'">
+      <!-- 道行 / 气血 / 答题统计：只在修炼页展示 -->
+      <div v-if="userState" class="status-wrap">
+        <GameStatus :state="userState" />
+      </div>
+
       <!-- 首页 / 配置 -->
       <section v-if="questions.length === 0" class="panel">
         <div class="field">
@@ -202,7 +224,7 @@ function restart() {
               <span class="dquality">{{ d.rarity }}</span>
             </li>
           </ul>
-          <p class="drops-tip">已收入行囊，可到「背包」查看与佩戴。</p>
+          <p class="drops-tip">已收入行囊，可到「我的」页右侧查看与佩戴。</p>
         </div>
         <p v-else class="drops-none">此番未有宝物现世，再修一轮或有机缘。</p>
 
@@ -212,12 +234,19 @@ function restart() {
         <p v-if="error" class="error">{{ error }}</p>
       </template>
 
-      <!-- 背包（储物）页面 -->
-      <BagView v-else-if="tab === 'bag'" :key="bagKey" @changed="loadMe" />
-
-      <!-- 个人页面 -->
-      <ProfileView v-else :key="profileKey" />
+      <!-- 个人页面：左侧名帖与修为，右侧行囊（背包） -->
+      <div v-else class="profile-layout">
+        <div class="col-main"><ProfileView :key="profileKey" @test-root="startRootTest" /></div>
+        <div class="col-side"><BagView :key="bagKey" @changed="loadMe" /></div>
+      </div>
     </template>
+
+    <!-- 测灵根引导/重测 -->
+    <SpiritRootView
+      v-if="rootTestOpen"
+      @close="rootTestOpen = false"
+      @done="onRootDone"
+    />
 
     <footer>仙途 MVP · 后端 Spring Boot + MyBatis-Plus + MySQL · 前端 Vue3</footer>
   </div>
@@ -228,6 +257,16 @@ function restart() {
   max-width: 720px; margin: 0 auto; padding: 32px 20px 60px;
   position: relative; z-index: 1;          /* 浮于水墨背景之上 */
   animation: inkIn .7s ease-out both;      /* 墨落宣纸的入场 */
+  transition: max-width .25s ease;
+}
+/* 「我的」页右侧要放行囊，故放宽容器 */
+.app.wide { max-width: 1080px; }
+.profile-layout {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 16px; align-items: start;
+}
+@media (max-width: 900px) {
+  .profile-layout { grid-template-columns: 1fr; }
 }
 header { text-align: center; margin-bottom: 22px; position: relative; }
 .brand { display: inline-flex; align-items: center; gap: 12px; justify-content: center; }

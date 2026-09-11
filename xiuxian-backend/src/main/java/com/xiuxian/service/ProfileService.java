@@ -78,6 +78,7 @@ public class ProfileService {
                 maskPhone(u.getUsername()),
                 u.getNickname(),
                 AvatarPolicy.of(u.getAvatar(), u.getNickname()),
+                SpiritRootPolicy.byCode(u.getSpiritRootCode()),
                 TITLES.getOrDefault(info.realm(), "修行中人"),
                 info.realm(),
                 info.layer(),

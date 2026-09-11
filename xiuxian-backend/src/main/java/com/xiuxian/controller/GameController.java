@@ -5,6 +5,7 @@ import com.xiuxian.model.entity.User;
 import com.xiuxian.service.GameService;
 import com.xiuxian.service.ProfileService;
 import com.xiuxian.service.QuestionService;
+import com.xiuxian.service.SpiritRootPolicy;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,7 +62,7 @@ public class GameController {
         double accuracy = u.getAnswerCount() == 0 ? 0.0
                 : (double) u.getCorrectCount() / u.getAnswerCount();
         return new UserStateView(
-                u.getId(), u.getUserNo(), u.getNickname(), u.getRealm(), u.getLayer(),
+                u.getId(), u.getUserNo(), SpiritRootPolicy.byCode(u.getSpiritRootCode()), u.getNickname(), u.getRealm(), u.getLayer(),
                 u.getExp(), u.getHp(), u.getMaxHp(), realm.progress(),
                 u.getAnswerCount(), u.getCorrectCount(), accuracy, u.getHp() > 0
         );

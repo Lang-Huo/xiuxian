@@ -8,6 +8,7 @@ import com.xiuxian.model.dto.TreasureDrop;
 import com.xiuxian.model.entity.Question;
 import com.xiuxian.model.entity.Treasure;
 import com.xiuxian.model.entity.User;
+import com.xiuxian.util.AnswerUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,15 +76,24 @@ public class GameService {
             throw new IllegalArgumentException("题目不存在: " + questionId);
         }
 
-        boolean correct = isCorrect(q, userAnswer);
+        boolean correct = AnswerUtil.isCorrect(q, userAnswer);
         double coeff = difficultyCoeff(q.getDifficulty());
         double equipBonus = 1 + bagService.expBonusPercent(userId) / 100.0;
+        double rootMult = SpiritRootPolicy.multiplier(user.getSpiritRootCode());   // 未测为 1.0
 
-        int expGain = (int) Math.round(BASE_EXP * coeff * (correct ? 1.0 : 0.3) * equipBonus);
-        int hpDelta = correct ? CORRECT_HP_HEAL
-                : -(int) Math.round(WRONG_HP_COST_BASE * coeff);
+        int expGain = (int) Math.round(BASE_EXP * coeff * (correct ? 1.0 : 0.3) * equipBonus * rootMult);
 
-        int newHp = Math.max(0, Math.min(user.getMaxHp(), user.getHp() + hpDelta));
+        // 气血结算：答对小幅回血（不超上限）；答错只扣血、绝不回血，
+        // 且当剩余气血不足以支付本次伤害时直接归零，不会出现负值。
+        int before = user.getHp();
+        int newHp;
+        if (correct) {
+            newHp = Math.min(user.getMaxHp(), before + CORRECT_HP_HEAL);
+        } else {
+            int cost = (int) Math.round(WRONG_HP_COST_BASE * coeff);
+            newHp = before <= cost ? 0 : before - cost;
+        }
+        int hpDelta = newHp - before;      // 真实变化量（满血答对时为 0，而非显示 +3）
         int newExp = user.getExp() + expGain;
 
         String oldRealm = user.getRealm();
@@ -171,15 +181,6 @@ public class GameService {
             }
         }
         return pool.get(pool.size() - 1);
-    }
-
-    private boolean isCorrect(Question q, String userAnswer) {
-        if (userAnswer == null) return false;
-        String ua = userAnswer.trim();
-        if ("JUDGE".equals(q.getType())) {
-            return Boolean.parseBoolean(ua) == Boolean.parseBoolean(q.getAnswer());
-        }
-        return ua.equalsIgnoreCase(q.getAnswer().trim());
     }
 
     private double difficultyCoeff(String difficulty) {

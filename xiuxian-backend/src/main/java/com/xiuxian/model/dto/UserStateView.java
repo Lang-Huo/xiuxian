@@ -6,6 +6,7 @@ package com.xiuxian.model.dto;
 public record UserStateView(
         Long id,
         String userNo,        // 仙途编号（6 位，对外用户ID）
+        SpiritRootView spiritRoot, // 灵根（null 表示尚未测灵根）
         String nickname,
         String realm,
         int layer,

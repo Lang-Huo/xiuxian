@@ -118,7 +118,7 @@ public class AuthService {
         double accuracy = u.getAnswerCount() == 0 ? 0.0
                 : (double) u.getCorrectCount() / u.getAnswerCount();
         return new UserStateView(
-                u.getId(), u.getUserNo(), u.getNickname(), u.getRealm(), u.getLayer(),
+                u.getId(), u.getUserNo(), SpiritRootPolicy.byCode(u.getSpiritRootCode()), u.getNickname(), u.getRealm(), u.getLayer(),
                 u.getExp(), u.getHp(), u.getMaxHp(), realm.progress(),
                 u.getAnswerCount(), u.getCorrectCount(), accuracy, u.getHp() > 0
         );

@@ -11,6 +11,7 @@ public record ProfileView(
         String username,          // 登录手机号（已脱敏，如 138****5678）
         String nickname,          // 道号/昵称
         AvatarView avatar,        // 头像（内置头像库中的一款，绝不为 null）
+        SpiritRootView spiritRoot, // 灵根（null 表示尚未测灵根）
         String title,             // 称号（由境界派生）
         String realm,             // 当前境界
         int layer,                // 当前境界层数

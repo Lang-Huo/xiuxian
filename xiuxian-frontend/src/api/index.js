@@ -44,6 +44,8 @@ export const api = {
     request('POST', '/topics/generate', { topic, difficulty, count }),
   answer: (questionId, userAnswer) =>
     request('POST', '/answer', { questionId, userAnswer }),
+  spiritRootStart: (difficulty = '入门') => request('POST', `/spirit-root/start?difficulty=${encodeURIComponent(difficulty)}`),
+  spiritRootSubmit: (answers) => request('POST', '/spirit-root/submit', { answers }),
   avatars: () => request('GET', '/avatars'),
   setAvatar: (code) => request('POST', '/users/avatar', { code }),
   bag: () => request('GET', '/bag'),

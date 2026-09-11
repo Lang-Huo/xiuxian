@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     nickname      VARCHAR(64)  NOT NULL DEFAULT '道友'       COMMENT '道号/昵称（展示用，可重复）',
     avatar        VARCHAR(32)  NOT NULL DEFAULT ''           COMMENT '头像编码（内置头像库编码，见 AvatarPolicy；空则按默认处理）',
     password      VARCHAR(128) NOT NULL DEFAULT ''            COMMENT '登录密码（BCrypt 哈希存储）',
-    realm         VARCHAR(32)  NOT NULL DEFAULT '凡人'        COMMENT '修仙境界（凡人/练气/筑基/金丹/元婴/化神…）',
+    spirit_root       VARCHAR(16)  NOT NULL DEFAULT ''           COMMENT '灵根（兼容旧字段，存中文名；新逻辑以 spirit_root_code 为准）',
+    spirit_root_code  VARCHAR(32)                                  COMMENT '灵根编码（关联 spirit_roots.code；NULL 表示尚未测灵根）',
+    realm          VARCHAR(32)  NOT NULL DEFAULT '凡人'        COMMENT '修仙境界（凡人/练气/筑基/金丹/元婴/化神…）',
     layer         INT          NOT NULL DEFAULT 1             COMMENT '当前境界层数',
     exp           INT          NOT NULL DEFAULT 0             COMMENT '累计道行/经验值',
     hp            INT          NOT NULL DEFAULT 100           COMMENT '当前气血值（耗尽则不可答题）',
@@ -27,6 +29,16 @@ CREATE TABLE IF NOT EXISTS topics (
     difficulty  VARCHAR(32)  NOT NULL DEFAULT '入门'              COMMENT '难度（入门/进阶/精通）',
     count       INT          NOT NULL DEFAULT 5                   COMMENT '生成题目数量',
     created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP           COMMENT '创建时间'
+);
+
+CREATE TABLE IF NOT EXISTS spirit_roots (
+    id          BIGINT       AUTO_INCREMENT PRIMARY KEY           COMMENT '灵根ID（主键）',
+    code        VARCHAR(32)  NOT NULL DEFAULT '' UNIQUE           COMMENT '灵根编码（FIVE/DOUBLE/SINGLE/VARIANT/SKY/CHAOS，程序用）',
+    name        VARCHAR(16)  NOT NULL DEFAULT ''                  COMMENT '灵根名（五灵根/双灵根/单灵根/变异灵根/天灵根/混沌灵根）',
+    multiplier  DECIMAL(4,2) NOT NULL DEFAULT 1.00               COMMENT '道行倍率（答题经验乘此值，未测为 1.0）',
+    rarity      VARCHAR(16)  NOT NULL DEFAULT '常见'              COMMENT '稀有度（常见/较稀有/稀有/极稀有）',
+    description VARCHAR(255)                                     COMMENT '灵根描述',
+    created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP            COMMENT '创建时间'
 );
 
 CREATE TABLE IF NOT EXISTS treasures (
@@ -113,3 +125,29 @@ FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM treasures WHERE code = 'ARMOR_YUNWEN')
 INSERT INTO treasures (code, name, type, slot, rarity, bag_bonus, exp_bonus, hp_restore, drop_weight, description)
 SELECT 'ART_WUXING', '五行遁法', 'EQUIP', 'ART', '灵品', 0, 8, 0, 60, '通达五行变化，悟道更快，修行所得道行 +8%。'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM treasures WHERE code = 'ART_WUXING');
+
+-- 初始灵根图鉴（幂等：按 code 判存）
+-- id 固定 1..6 方便业务逻辑按品级排序；后续调整只需 INSERT 新的 code，code 唯一索引兜底
+INSERT INTO spirit_roots (code, name, multiplier, rarity, description)
+SELECT 'FIVE',   '五灵根',   0.80, '常见',   '五行驳杂，修行缓慢，胜在根基扎实、后劲绵长。'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM spirit_roots WHERE code = 'FIVE');
+
+INSERT INTO spirit_roots (code, name, multiplier, rarity, description)
+SELECT 'DOUBLE', '双灵根',   1.00, '常见',   '双系并行，中规中矩，稳扎稳打亦是道。'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM spirit_roots WHERE code = 'DOUBLE');
+
+INSERT INTO spirit_roots (code, name, multiplier, rarity, description)
+SELECT 'SINGLE', '单灵根',   1.15, '较稀有', '一系精纯，杂念尽去，悟道快人一步。'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM spirit_roots WHERE code = 'SINGLE');
+
+INSERT INTO spirit_roots (code, name, multiplier, rarity, description)
+SELECT 'VARIANT','变异灵根', 1.30, '稀有',   '异变之体，不循常理，修行事半功倍。'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM spirit_roots WHERE code = 'VARIANT');
+
+INSERT INTO spirit_roots (code, name, multiplier, rarity, description)
+SELECT 'SKY',    '天灵根',   1.50, '稀有',   '天赐之资，心随意动，道途坦荡无阻。'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM spirit_roots WHERE code = 'SKY');
+
+INSERT INTO spirit_roots (code, name, multiplier, rarity, description)
+SELECT 'CHAOS',  '混沌灵根', 2.00, '极稀有', '混沌初开，万法归一，修行一日千里。'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM spirit_roots WHERE code = 'CHAOS');

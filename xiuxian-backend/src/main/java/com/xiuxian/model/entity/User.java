@@ -36,6 +36,12 @@ public class User {
     /** 登录密码（BCrypt 哈希，永不返回给前端） */
     private String password;
 
+    /** 灵根（兼容旧字段，存中文名；新逻辑以 spiritRootCode 为准） */
+    private String spiritRoot = "";
+
+    /** 灵根编码（关联 spirit_roots.code；null 表示尚未测灵根） */
+    private String spiritRootCode;
+
     /** 境界名称，如 凡人 / 练气 / 筑基 ... */
     private String realm = "凡人";
 
